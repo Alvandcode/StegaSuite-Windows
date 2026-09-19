@@ -15,11 +15,13 @@ with AES-256-GCM encryption. Windows port of
 
 | Edition | Link | Notes |
 |---------|------|-------|
-| 🪟 **Windows (this repo)** | [Windows Releases](https://github.com/Alvandcode/StegaSuite-Windows/releases) | `StegaSuite-Install-2.0.0.zip` (self-contained installer) or `StegaSuite-Portable-2.0.0.exe` (portable) |
+| 🪟 **Windows (this repo)** | [Windows Releases](https://github.com/Alvandcode/StegaSuite-Windows/releases) | `StegaSuite-Setup-*.zip` (self-contained installer — unzip and run `Install.bat`) or `StegaSuite.exe` (portable, needs [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download)) |
 | 🤖 **Android (sister repo)** | [Android Releases](https://github.com/Alvandcode/StegaSuite/releases) | `StegaSuite-v{version}.apk` — grab the mobile build if you use Android |
 
 > Both editions share the same wire format (`SGP2`/`SGF1`/`SGA1`), so files hidden
 > on Windows extract on Android and vice versa.
+> Releases are built automatically by GitHub Actions on every version tag
+> (`git tag vX.Y.Z && git push origin vX.Y.Z`) — always grab the latest version.
 
 ---
 
@@ -36,6 +38,36 @@ image/audio even knows a secret is inside.
 
 Full visual tutorial (Android UI, same logic):
 [alvandcode.github.io/StegaSuite/tutorial.html](https://alvandcode.github.io/StegaSuite/tutorial.html)
+
+## Prerequisites
+
+- Windows 10/11 x64.
+- Installer version: self-contained, no .NET installation required.
+- Portable version (`StegaSuite.exe`): requires
+  [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download).
+
+## How to use
+
+**Hide:**
+
+1. Open the Hide tab and pick a carrier file (PNG, BMP, WAV, or any file).
+2. Pick the secret file to hide and set an optional password.
+3. Click Hide and save the output file.
+
+**Extract:**
+
+1. Open the Extract tab and pick the stego file.
+2. Enter the password if one was set during hiding.
+3. Click Extract and save the recovered file.
+
+## Troubleshooting
+
+- **Blocked by antivirus / SmartScreen:** the files are unsigned; allow/keep
+  the file when Windows or your antivirus warns, or restore it from quarantine.
+- **Installer needs elevation:** right-click `Install.bat` and choose
+  Run as administrator. Without admin rights a per-user install is performed.
+- **Portable app won't start:** install the
+  [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download) and try again.
 
 ## Features
 
@@ -56,14 +88,14 @@ Full visual tutorial (Android UI, same logic):
 
 ### Option 1: Portable (fast)
 
-1. Download `StegaSuite-Portable-2.0.0.exe` from
+1. Download `StegaSuite.exe` (portable) from
    [Releases](https://github.com/Alvandcode/StegaSuite-Windows/releases).
 2. Install [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download) once.
 3. Run the EXE — no install, no admin needed.
 
 ### Option 2: Installer (self-contained)
 
-1. Download `StegaSuite-Install-2.0.0.zip` and unzip it.
+1. Download `StegaSuite-Setup-*.zip` and unzip it.
 2. Double-click `Install.bat` (with admin → machine install into Program Files;
    without admin → per-user install).
 3. Start-menu/desktop shortcuts are created and it registers in Add/Remove Programs.

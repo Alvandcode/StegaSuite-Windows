@@ -13,12 +13,26 @@
 
 | نسخه | لینک دانلود | توضیح |
 |------|-------------|-------|
-| 🪟 **ویندوز (همین ریپو)** | [Releases ویندوز](https://github.com/Alvandcode/StegaSuite-Windows/releases) | `StegaSuite-Install-2.0.0.zip` (نصبی، بدون نیاز به .NET) یا `StegaSuite-Portable-2.0.0.exe` (پرتابل) |
+| 🪟 **ویندوز (همین ریپو)** | [Releases ویندوز](https://github.com/Alvandcode/StegaSuite-Windows/releases) | `StegaSuite-Setup-*.zip` (نصبی، خودکفا، بدون نیاز به .NET — بعد از باز کردن زیپ `Install.bat` را اجرا کنید) یا `StegaSuite.exe` (پرتابل، نیاز به [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download)) |
 | 🤖 **اندروید (ریپوی خواهر)** | [Releases اندروید](https://github.com/Alvandcode/StegaSuite/releases) | فایل `StegaSuite-v{version}.apk` — اگر گوشی اندرویدی داری، نسخه موبایل را بگیر |
 
 > فرمت فایل‌های مخفی‌شده در دو نسخه **یکسان** است (`SGP2/SGF1/SGA1`)؛ فایلی که در ویندوز مخفی کنی در اندروید باز می‌شود و برعکس.
+> ریلیزها با GitHub Actions روی هر تگ نسخه خودکار ساخته می‌شوند (`git tag vX.Y.Z && git push origin vX.Y.Z`) — همیشه آخرین نسخه را بگیرید.
 
----
+## پیش‌نیازها
+
+- ویندوز ۱۰/۱۱ نسخه ۶۴بیتی.
+- نسخه نصبی: خودکفا (self-contained)، بدون نیاز به نصب .NET.
+- نسخه portable (`StegaSuite.exe`): نیاز به [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download) دارد.
+
+## اجرا (سریع، پرتابل)
+
+```bat
+StegaSuite.exe
+```
+```
+
+**آموزش تصویری نسخه اندروید:** [alvandcode.github.io/StegaSuite/tutorial.html](https://alvandcode.github.io/StegaSuite/tutorial.html) — منطق مخفی‌سازی یکی است، فقط ظاهر دکمه‌ها در ویندوز فرق می‌کند.
 
 ## StegaSuite چیست؟
 
@@ -27,8 +41,6 @@
 ```
 📷 فایل حامل + 📄 فایل مخفی + 🔑 رمز (اختیاری) → 🔒 فایل خروجی عادی
 ```
-
-**آموزش تصویری نسخه اندروید:** [alvandcode.github.io/StegaSuite/tutorial.html](https://alvandcode.github.io/StegaSuite/tutorial.html) — منطق مخفی‌سازی یکی است، فقط ظاهر دکمه‌ها در ویندوز فرق می‌کند.
 
 ## امکانات کلیدی
 
@@ -48,17 +60,47 @@
 
 ---
 
+فایل `StegaSuite-Setup-*.zip` آخرین ریلیز را باز کنید و روی `Install.bat` دابل‌کلیک
+کنید (دسترسی ادمین می‌خواهد؛ بدون ادمین، نصب کاربر-محور انجام می‌شود).
+نصب‌کننده نسخه خودکفا (بدون نیاز به دانلود .NET) را در Program Files می‌گذارد،
+میانبر استارت‌منو/دسکتاپ می‌سازد و در Add/Remove Programs ثبت می‌کند.
+حذف از همان‌جاست. دیتای کاربر (`%AppData%\StegaSuite`) با حذف برنامه پاک نمی‌شود.
+
+## راهنمای مخفی‌سازی و استخراج
+
+**مخفی‌سازی (Hide):**
+
+1. وارد تب مخفی‌سازی شوید و یک فایل حامل انتخاب کنید (PNG ،BMP ،WAV یا هر فایل).
+2. فایل محرمانه را انتخاب کنید و در صورت نیاز رمز بگذارید.
+3. روی دکمه مخفی‌سازی بزنید و فایل خروجی را ذخیره کنید.
+
+**استخراج (Extract):**
+
+1. وارد تب استخراج شوید و فایل حاوی داده را انتخاب کنید.
+2. اگر موقع مخفی‌سازی رمز گذاشته‌اید، همان رمز را وارد کنید.
+3. روی دکمه استخراج بزنید و فایل بازیابی‌شده را ذخیره کنید.
+
+## رفع مشکل (Troubleshooting)
+
+- **هشدار آنتی‌ویروس / SmartScreen:** فایل‌ها امضای دیجیتال ندارند؛ در صورت
+  هشدار ویندوز یا آنتی‌ویروس، فایل را Allow/Keep کنید یا از قرنطینه برگردانید.
+- **نصب نیاز به ادمین دارد:** روی `Install.bat` راست‌کلیک کنید و
+  Run as administrator را بزنید. بدون دسترسی ادمین، نصب کاربر-محور انجام می‌شود.
+- **نسخه portable اجرا نمی‌شود:** ابتدا
+  [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download)
+  را نصب کنید و دوباره تلاش کنید.
+
 ## نصب و اجرا
 
 ### گزینه ۱: پرتابل (سریع)
 
-1. از [Releases](https://github.com/Alvandcode/StegaSuite-Windows/releases) فایل `StegaSuite-Portable-2.0.0.exe` را دانلود کن.
+1. از [Releases](https://github.com/Alvandcode/StegaSuite-Windows/releases) فایل `StegaSuite.exe` (پرتابل) را دانلود کن.
 2. [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download) را نصب کن (فقط یک‌بار).
 3. فایل EXE را اجرا کن — بدون نصب، بدون ادمین.
 
 ### گزینه ۲: نصبی (خودکفا)
 
-1. فایل `StegaSuite-Install-2.0.0.zip` را دانلود و باز کن.
+1. فایل `StegaSuite-Setup-*.zip` را دانلود و باز کن.
 2. روی `Install.bat` دابل‌کلیک کن (با ادمین → نصب ماشینی در Program Files؛ بدون ادمین → نصب کاربرمحور).
 3. میانبر استارت‌منو/دسکتاپ ساخته می‌شود و در Add/Remove Programs ثبت می‌شود.
 4. حذف از همان Add/Remove Programs. دیتای کاربر (`%AppData%\StegaSuite`) با حذف برنامه **پاک نمی‌شود**.
