@@ -1,0 +1,30 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!-- Cyber Blue (dark) -->
+  <SolidColorBrush x:Key="WindowBrush" Color="#060C15"/>
+  <SolidColorBrush x:Key="SurfaceBrush" Color="#0A1220"/>
+  <SolidColorBrush x:Key="CardBrush" Color="#0F1F30"/>
+  <SolidColorBrush x:Key="CardBorderBrush" Color="#1E4A63"/>
+  <SolidColorBrush x:Key="TextBrush" Color="#FFFFFF"/>
+  <SolidColorBrush x:Key="SubBrush" Color="#9CC3D8"/>
+  <SolidColorBrush x:Key="SidebarBrush" Color="#081020"/>
+  <SolidColorBrush x:Key="SideIconBrush" Color="#5E7E95"/>
+  <SolidColorBrush x:Key="SideSelectedBrush" Color="#00BCD4"/>
+  <SolidColorBrush x:Key="SideSelectedIconBrush" Color="#052A33"/>
+  <SolidColorBrush x:Key="LogoBrush" Color="#00BCD4"/>
+  <SolidColorBrush x:Key="LogoFgBrush" Color="#052A33"/>
+  <SolidColorBrush x:Key="PillBrush" Color="#16283A"/>
+  <SolidColorBrush x:Key="PillFgBrush" Color="#EAF6FB"/>
+  <SolidColorBrush x:Key="AccentBrush" Color="#00BCD4"/>
+  <SolidColorBrush x:Key="AccentFgBrush" Color="#052A33"/>
+  <SolidColorBrush x:Key="FieldBrush" Color="#0A1626"/>
+  <SolidColorBrush x:Key="FieldBorderBrush" Color="#23506B"/>
+  <SolidColorBrush x:Key="FieldFgBrush" Color="#EAF6FB"/>
+  <SolidColorBrush x:Key="ConsoleBrush" Color="#050A10"/>
+  <SolidColorBrush x:Key="ConsoleFgBrush" Color="#7DF3FC"/>
+  <SolidColorBrush x:Key="LinkBrush" Color="#7DF3FC"/>
+  <LinearGradientBrush x:Key="HeroBrush" StartPoint="0,0" EndPoint="1,1">
+    <GradientStop Color="#123043" Offset="0"/>
+    <GradientStop Color="#0B1626" Offset="1"/>
+  </LinearGradientBrush>
+</ResourceDictionary>

@@ -1,0 +1,12 @@
+# Build outputs & local artifacts (never publish binaries)
+bin/
+obj/
+publish/
+Payload/
+*.zip
+*.pdb
+# IDE / user files
+.vs/
+*.user
+# Local machine config (may contain real credentials)
+config.json

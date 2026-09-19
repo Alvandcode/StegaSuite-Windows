@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>StegaSuite</AssemblyName>
+    <RootNamespace>StegaSuite</RootNamespace>
+    <Version>2.0.0</Version>
+    <Description>StegaSuite for Windows (WPF) - hide any file inside any file, AES-256-GCM + LSB</Description>
+    <Company>alvandcode</Company>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\app.ico" />
+    <Resource Include="Assets\raccoon.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Tests is a separate project living in a subfolder: keep it out of the app build -->
+    <Compile Remove="Tests\**" />
+    <EmbeddedResource Remove="Tests\**" />
+    <None Remove="Tests\**" />
+    <Page Remove="Tests\**" />
+  </ItemGroup>
+
+</Project>
