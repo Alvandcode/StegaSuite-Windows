@@ -95,6 +95,7 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
               </Grid.RowDefinitions>
               <Grid Grid.Row="0">
                 <Grid.ColumnDefinitions>
@@ -139,7 +140,8 @@
                       <TextBox x:Name="FPayload" Background="Transparent" BorderThickness="0" Height="42"
                                VerticalContentAlignment="Center" AllowDrop="True"
                                Foreground="{DynamicResource FieldFgBrush}"
-                               Drop="PathBox_Drop" PreviewDragOver="PathBox_DragOver"/>
+                               Drop="PathBox_Drop" PreviewDragOver="PathBox_DragOver"
+                               TextChanged="FPayload_TextChanged"/>
                     </Border>
                     <Button x:Name="BtnBrowseP" Style="{StaticResource PillButton}" Height="40" Margin="0,10,0,0" Click="BtnBrowseP_Click"/>
                     <TextBlock x:Name="LblPayloadHint" FontSize="11.5" Margin="6,8,0,0" MinHeight="16"
@@ -186,11 +188,17 @@
                   <DropShadowEffect Color="Black" Opacity="0.25" BlurRadius="14" ShadowDepth="0"/>
                 </Button.Effect>
               </Button>
+              <ProgressBar x:Name="PbHide" Grid.Row="3" Height="6" Margin="0,10,0,0"
+                           Minimum="0" Maximum="100" BorderThickness="0"
+                           Background="{DynamicResource FieldBrush}"
+                           Foreground="{DynamicResource AccentBrush}"
+                           Visibility="Collapsed"/>
             </Grid>
 
             <!-- EXTRACT -->
             <Grid x:Name="Page1" Visibility="Collapsed">
               <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -256,6 +264,11 @@
                   <DropShadowEffect Color="Black" Opacity="0.25" BlurRadius="14" ShadowDepth="0"/>
                 </Button.Effect>
               </Button>
+              <ProgressBar x:Name="PbExtract" Grid.Row="3" Height="6" Margin="0,10,0,0"
+                           Minimum="0" Maximum="100" BorderThickness="0"
+                           Background="{DynamicResource FieldBrush}"
+                           Foreground="{DynamicResource AccentBrush}"
+                           Visibility="Collapsed"/>
             </Grid>
 
             <!-- ABOUT -->
@@ -450,6 +463,7 @@
                     <Button x:Name="BtnBackupExport" Style="{StaticResource PillButton}" MinWidth="150" Height="42" Padding="14,0" Margin="0,0,8,8" Click="BtnBackupExport_Click"/>
                     <Button x:Name="BtnRotateRecovery" Style="{StaticResource PillButton}" MinWidth="150" Height="42" Padding="14,0" Margin="0,0,8,8" Click="BtnRotateRecovery_Click"/>
                     <Button x:Name="BtnLogout" Style="{StaticResource PillButton}" MinWidth="130" Height="42" Padding="14,0" Margin="0,0,8,8" Click="BtnLogout_Click"/>
+                    <Button x:Name="BtnHistory" Style="{StaticResource PillButton}" MinWidth="150" Height="42" Padding="14,0" Margin="0,0,8,8" Click="BtnHistory_Click"/>
                   </WrapPanel>
                   <TextBlock x:Name="LblBackupHint" FontSize="12" Margin="6,8,0,0" LineHeight="20"
                              LineStackingStrategy="BlockLineHeight"
@@ -543,7 +557,7 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" Text="&#x1F464;" FontSize="18" Margin="0,0,10,0"
                                VerticalAlignment="Center" Foreground="{DynamicResource SubBrush}"/>
-                    <TextBox x:Name="FAuthUser" Grid.Column="1" Background="Transparent" BorderThickness="0"
+                    <TextBox x:Name="FAuthUser" KeyDown="AuthEnter_KeyDown" Grid.Column="1" Background="Transparent" BorderThickness="0"
                              Height="40" VerticalContentAlignment="Center" FlowDirection="LeftToRight"
                              FontSize="14" Foreground="{DynamicResource FieldFgBrush}"/>
                   </Grid>
@@ -555,7 +569,7 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" Text="&#x1F511;" FontSize="18" Margin="0,0,10,0"
                                VerticalAlignment="Center" Foreground="{DynamicResource SubBrush}"/>
-                    <PasswordBox x:Name="FAuthPass" Grid.Column="1" Background="Transparent" BorderThickness="0"
+                    <PasswordBox x:Name="FAuthPass" KeyDown="AuthEnter_KeyDown" Grid.Column="1" Background="Transparent" BorderThickness="0"
                                  Height="40" VerticalContentAlignment="Center" FontSize="14"
                                  Foreground="{DynamicResource FieldFgBrush}"/>
                   </Grid>
@@ -568,7 +582,7 @@
                       </Grid.ColumnDefinitions>
                       <TextBlock Grid.Column="0" Text="&#x1F511;" FontSize="18" Margin="0,0,10,0"
                                  VerticalAlignment="Center" Foreground="{DynamicResource SubBrush}"/>
-                      <PasswordBox x:Name="FAuthPass2" Grid.Column="1" Background="Transparent" BorderThickness="0"
+                      <PasswordBox x:Name="FAuthPass2" KeyDown="AuthEnter_KeyDown" Grid.Column="1" Background="Transparent" BorderThickness="0"
                                    Height="40" VerticalContentAlignment="Center" FontSize="14"
                                    Foreground="{DynamicResource FieldFgBrush}"/>
                     </Grid>
@@ -637,7 +651,7 @@
                              Foreground="{DynamicResource SubBrush}"/>
                   <Border CornerRadius="14" Background="{DynamicResource FieldBrush}"
                           BorderBrush="{DynamicResource FieldBorderBrush}" BorderThickness="1" Padding="14,0">
-                    <TextBox x:Name="FAuthRecovery" Background="Transparent" BorderThickness="0" Height="42"
+                    <TextBox x:Name="FAuthRecovery" KeyDown="AuthEnter_KeyDown" Background="Transparent" BorderThickness="0" Height="42"
                              VerticalContentAlignment="Center" FlowDirection="LeftToRight"
                              Foreground="{DynamicResource FieldFgBrush}"/>
                   </Border>
@@ -645,14 +659,14 @@
                              Foreground="{DynamicResource SubBrush}"/>
                   <Border CornerRadius="14" Background="{DynamicResource FieldBrush}"
                           BorderBrush="{DynamicResource FieldBorderBrush}" BorderThickness="1" Padding="14,0">
-                    <PasswordBox x:Name="FAuthNew1" Background="Transparent" BorderThickness="0" Height="42"
+                    <PasswordBox x:Name="FAuthNew1" KeyDown="AuthEnter_KeyDown" Background="Transparent" BorderThickness="0" Height="42"
                                  VerticalContentAlignment="Center" Foreground="{DynamicResource FieldFgBrush}"/>
                   </Border>
                   <TextBlock x:Name="LblNewPass2Cap" FontSize="12.5" Margin="6,10,0,4"
                              Foreground="{DynamicResource SubBrush}"/>
                   <Border CornerRadius="14" Background="{DynamicResource FieldBrush}"
                           BorderBrush="{DynamicResource FieldBorderBrush}" BorderThickness="1" Padding="14,0">
-                    <PasswordBox x:Name="FAuthNew2" Background="Transparent" BorderThickness="0" Height="42"
+                    <PasswordBox x:Name="FAuthNew2" KeyDown="AuthEnter_KeyDown" Background="Transparent" BorderThickness="0" Height="42"
                                  VerticalContentAlignment="Center" Foreground="{DynamicResource FieldFgBrush}"/>
                   </Border>
                   <Button x:Name="BtnAuthRestore" Style="{StaticResource PillButton}" Height="50" FontSize="15"

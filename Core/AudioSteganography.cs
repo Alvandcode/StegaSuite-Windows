@@ -66,7 +66,7 @@ public static class AudioSteganography
 
     public static long MaxPayloadBytes(byte[] data) => CapacityBytes(data) - HeaderSize - 50;
 
-    public static byte[] Hide(byte[] wavData, byte[] payload, string fileName, string? password)
+    public static byte[] Hide(byte[] wavData, byte[] payload, string fileName, string? password, IProgress<double>? progress = null)
     {
         if (!IsWav(wavData)) throw new ArgumentException("Not a valid WAV file");
         string safeName = string.IsNullOrWhiteSpace(fileName) ? "file" : fileName;
@@ -125,11 +125,14 @@ public static class AudioSteganography
                     output[sampleOffset + b] = (byte)((sample >> (b * 8)) & 0xFF);
                 bitIndex++;
             }
+            if (progress != null && ((i - dataOffset) & 65535) == 0 && totalBits > 0)
+                progress.Report((double)bitIndex / totalBits);
         }
+        progress?.Report(1.0);
         return output;
     }
 
-    public static ExtractResult Extract(byte[] wavData, string? password)
+    public static ExtractResult Extract(byte[] wavData, string? password, IProgress<double>? progress = null)
     {
         if (!IsWav(wavData)) throw new ArgumentException("Not a valid WAV file");
         int channels = GetUInt16LE(wavData, 22);
@@ -139,6 +142,7 @@ public static class AudioSteganography
         int dataOffset = FindDataChunkOffset(wavData);
 
         var sampleBits = new List<int>();
+        long scanTotal = wavData.LongLength - dataOffset;
         for (long i = dataOffset; i < wavData.LongLength; i += bytesPerSample)
         {
             for (int ch = 0; ch < channels; ch++)
@@ -150,7 +154,10 @@ public static class AudioSteganography
                     sample |= ((long)(wavData[sampleOffset + b] & 0xFF)) << (b * 8);
                 sampleBits.Add((int)(sample & 1L));
             }
+            if (progress != null && scanTotal > 0 && ((i - dataOffset) & 131071) == 0)
+                progress.Report(0.05 + 0.90 * ((double)(i - dataOffset) / scanTotal));
         }
+        progress?.Report(0.95);
 
         if (sampleBits.Count < HeaderSize * 8) throw new ArgumentException("No hidden file found in this audio");
         byte[] magic = BitsToBytes(sampleBits.GetRange(0, 4 * 8).ToArray());

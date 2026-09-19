@@ -22,7 +22,7 @@ public static class SelfTest
         "Theme0", "Theme1", "Theme2", "Theme3", "Theme4", "Theme5",
         "Theme6", "Theme7", "Theme8",
         "BtnBrowseCH", "BtnBrowseP", "BtnBrowseCE", "BtnStar", "BtnCopy",
-        "ChkShowH", "ChkShowE",
+        "ChkShowH", "ChkShowE", "BtnHistory",
         "BtnBackupExport", "BtnRotateRecovery", "BtnLogout", "FExportCode",
     };
     private static readonly string[] Texts =

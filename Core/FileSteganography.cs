@@ -22,7 +22,7 @@ public static class FileSteganography
 
     public static long MaxPayloadBytes(byte[] data) => CapacityBytes(data) - HeaderSize - 50;
 
-    public static byte[] Hide(byte[] carrierData, byte[] payload, string fileName, string? password)
+    public static byte[] Hide(byte[] carrierData, byte[] payload, string fileName, string? password, IProgress<double>? progress = null)
     {
         string safeName = string.IsNullOrWhiteSpace(fileName) ? "file" : fileName;
         byte[] nameBytes = Encoding.UTF8.GetBytes(safeName);
@@ -66,13 +66,18 @@ public static class FileSteganography
             int bit = (packetByte >> (7 - (int)(bitIndex % 8))) & 1;
             output[i] = (byte)((output[i] & 0xFE) | bit);
             bitIndex++;
+            if (progress != null && (i & 65535) == 0 && totalBits > 0)
+                progress.Report((double)bitIndex / totalBits);
         }
+        progress?.Report(1.0);
         return output;
     }
 
-    public static ExtractResult Extract(byte[] carrierData, string? password)
+    public static ExtractResult Extract(byte[] carrierData, string? password, IProgress<double>? progress = null)
     {
         long safeStart = GetSafeOffset(carrierData);
+        IProgress<double>? bulk = progress == null ? null
+            : new Progress<double>(p => progress.Report(0.05 + 0.95 * p));
         int[] magicBits = ReadBits(carrierData, safeStart, 4 * 8);
         byte[] magic = BitsToBytes(magicBits);
         if (!EqualsBytes(magic, Magic))
@@ -85,7 +90,7 @@ public static class FileSteganography
         long needed = (HeaderSize + len) * 8L;
         if (needed > (carrierData.LongLength - safeStart) * 8L) throw new ArgumentException("Data corrupted");
 
-        int[] all = ReadBits(carrierData, safeStart, (int)needed);
+        int[] all = ReadBits(carrierData, safeStart, (int)needed, bulk);
         byte[] encPayload = BitsToBytes(Sub(all, HeaderSize * 8, all.Length - HeaderSize * 8));
 
         byte[] inner;
@@ -176,7 +181,7 @@ public static class FileSteganography
         return headerEnd;
     }
 
-    internal static int[] ReadBits(byte[] data, long startOffset, int count)
+    internal static int[] ReadBits(byte[] data, long startOffset, int count, IProgress<double>? progress = null)
     {
         var res = new int[count];
         int idx = 0;
@@ -188,7 +193,10 @@ public static class FileSteganography
             // in packet order, so reading back takes LSB of each successive byte.
             res[idx++] = b & 1;
             bi++;
+            if (progress != null && (idx & 8191) == 0 && count > 0)
+                progress.Report((double)idx / count);
         }
+        progress?.Report(1.0);
         return res;
     }
 

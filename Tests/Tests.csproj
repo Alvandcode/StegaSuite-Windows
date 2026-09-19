@@ -11,5 +11,6 @@
     <Compile Include="..\Core\*.cs" />
     <Compile Include="..\AuthStore.cs" />
     <Compile Include="..\GoogleAuth.cs" />
+    <Compile Include="..\HistoryStore.cs" />
   </ItemGroup>
 </Project>

@@ -67,39 +67,44 @@ public static class PngSteganography
     public static long MaxPayloadBytes(Bitmap bitmap) => CapacityBytes(bitmap) - HeaderV2 - 50;
 
     // ── High-level: bytes in / bytes out ──
-    public static byte[] HideImage(byte[] carrierImageBytes, byte[] payload, string fileName, string? password)
+    public static byte[] HideImage(byte[] carrierImageBytes, byte[] payload, string fileName, string? password, IProgress<double>? progress = null)
     {
         using var bmp = Decode(carrierImageBytes);
-        using var output = Hide(bmp, payload, fileName, password);
+        using var output = Hide(bmp, payload, fileName, password, progress);
+        progress?.Report(1.0);
         return EncodePng(output);
     }
 
-    public static byte[] HideGeneric(byte[] carrierData, byte[] payload, string fileName, string? password, CarrierType carrierType) =>
+    public static byte[] HideGeneric(byte[] carrierData, byte[] payload, string fileName, string? password, CarrierType carrierType, IProgress<double>? progress = null) =>
         carrierType == CarrierType.WAV
-            ? AudioSteganography.Hide(carrierData, payload, fileName, password)
-            : FileSteganography.Hide(carrierData, payload, fileName, password);
+            ? AudioSteganography.Hide(carrierData, payload, fileName, password, progress)
+            : FileSteganography.Hide(carrierData, payload, fileName, password, progress);
 
-    public static ExtractResult ExtractGeneric(byte[] carrierData, string? password, CarrierType carrierType) =>
+    public static ExtractResult ExtractGeneric(byte[] carrierData, string? password, CarrierType carrierType, IProgress<double>? progress = null) =>
         carrierType == CarrierType.WAV
-            ? AudioSteganography.Extract(carrierData, password)
-            : FileSteganography.Extract(carrierData, password);
+            ? AudioSteganography.Extract(carrierData, password, progress)
+            : FileSteganography.Extract(carrierData, password, progress);
 
-    public static ExtractResult ExtractFromBytes(byte[] carrierData, string? password, CarrierType carrierType)
+    public static ExtractResult ExtractFromBytes(byte[] carrierData, string? password, CarrierType carrierType, IProgress<double>? progress = null)
     {
         if (carrierType == CarrierType.PNG || carrierType == CarrierType.BMP)
         {
             try
             {
                 using var bmp = Decode(carrierData);
-                return Extract(bmp, password);
+                var r = Extract(bmp, password, progress);
+                progress?.Report(1.0);
+                return r;
             }
             catch (ArgumentException) { /* fall through to generic */ }
         }
-        return ExtractGeneric(carrierData, password, carrierType);
+        var g = ExtractGeneric(carrierData, password, carrierType, progress);
+        progress?.Report(1.0);
+        return g;
     }
 
     // ── Bitmap-level hide/extract ──
-    public static Bitmap Hide(Bitmap bitmap, byte[] payload, string fileName, string? password)
+    public static Bitmap Hide(Bitmap bitmap, byte[] payload, string fileName, string? password, IProgress<double>? progress = null)
     {
         string safeName = string.IsNullOrWhiteSpace(fileName) ? "file" : fileName;
         byte[] nameBytes = Encoding.UTF8.GetBytes(safeName);
@@ -162,6 +167,8 @@ public static class PngSteganography
                     row[o] = (byte)ch[2]; row[o + 1] = (byte)ch[1]; row[o + 2] = (byte)ch[0];
                 }
                 Marshal.Copy(row, 0, IntPtr.Add(dstData.Scan0, y * stride), row.Length);
+                if (progress != null && (y & 15) == 0 && totalBits > 0)
+                    progress.Report((double)bitIndex / totalBits);
                 if (bitIndex >= totalBits)
                 {
                     // copy remaining rows untouched
@@ -182,8 +189,11 @@ public static class PngSteganography
         return output;
     }
 
-    public static ExtractResult Extract(Bitmap bitmap, string? password)
+    public static ExtractResult Extract(Bitmap bitmap, string? password, IProgress<double>? progress = null)
     {
+        // Small header reads report nothing; only the final bulk read drives progress.
+        IProgress<double>? bulk = progress == null ? null
+            : new Progress<double>(p => progress.Report(0.05 + 0.95 * p));
         int[] magicBits = ReadBits(bitmap, 4 * 8);
         byte[] magic = BitsToBytes(magicBits);
 
@@ -196,7 +206,7 @@ public static class PngSteganography
             if (len < 0 || len > int.MaxValue) throw new ArgumentException("Invalid length");
             long needed = (HeaderV1 + len) * 8L;
             if (needed > (long)bitmap.Width * bitmap.Height * 3L) throw new ArgumentException("Data corrupted");
-            int[] all = ReadBits(bitmap, (int)needed);
+            int[] all = ReadBits(bitmap, (int)needed, bulk);
             byte[] payload = BitsToBytes(FileSteganography.Sub(all, HeaderV1 * 8, all.Length - HeaderV1 * 8));
             byte[] data = string.IsNullOrEmpty(password) ? payload : StegaCrypto.Decrypt(payload, password);
             return new ExtractResult(data, "recovered_file");
@@ -211,7 +221,7 @@ public static class PngSteganography
         if (len2 < 0 || len2 > MaxPayload) throw new ArgumentException("Suspicious length");
         long needed2 = (HeaderV2 + len2) * 8L;
         if (needed2 > (long)bitmap.Width * bitmap.Height * 3L) throw new ArgumentException("Data corrupted");
-        int[] all2 = ReadBits(bitmap, (int)needed2);
+        int[] all2 = ReadBits(bitmap, (int)needed2, bulk);
         byte[] encPayload = BitsToBytes(FileSteganography.Sub(all2, HeaderV2 * 8, all2.Length - HeaderV2 * 8));
 
         byte[] inner;
@@ -268,7 +278,7 @@ public static class PngSteganography
         return flat;
     }
 
-    private static int[] ReadBits(Bitmap bitmap, int count)
+    private static int[] ReadBits(Bitmap bitmap, int count, IProgress<double>? progress = null)
     {
         var result = new int[count];
         var rect = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
@@ -292,9 +302,12 @@ public static class PngSteganography
                         result[idx++] = c & 1;
                     }
                 }
+                if (progress != null && (idx & 4095) == 0 && count > 0)
+                    progress.Report((double)idx / count);
             }
         }
         finally { bitmap.UnlockBits(data); }
+        progress?.Report(1.0);
         return result;
     }
 

@@ -3,8 +3,12 @@ using System.Collections.Generic;
 using System.Text;
 using System.Diagnostics;
 using System.IO;
+using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Threading;
+using Microsoft.Win32;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -25,6 +29,10 @@ public partial class MainWindow : Window
     private bool _authRestoreMode;
     private string? _pendingCode;
     private string? _restoreFile;
+    private readonly Dictionary<string, (int n, DateTime until)> _loginFails = new();
+    private DispatcherTimer? _idleTimer;
+    private bool _updateChecked;
+    private const string AppVersion = "2.0.0";
 
     internal static readonly string[] ThemeFiles =
     {
@@ -154,6 +162,14 @@ public partial class MainWindow : Window
         ["googleError"] = new[] { "ورود با گوگل ناموفق بود: ", "فشل الدخول عبر Google: ", "Google sign-in failed: ", "Ошибка входа через Google: ", "Google 登录失败：" },
         ["googleOk"] = new[] { "ورود موفق شد؛ این تب را ببندید و به برنامه برگردید.", "تم الدخول؛ أغلق التب وارجع.", "Signed in — close this tab and return to the app.", "Вход выполнен — закройте вкладку и вернитесь.", "登录成功，请关闭此标签页并返回应用。" },
         ["linkGoogleQ"] = new[] { "حسابی با این جیمیل و رمز عبور وجود دارد. ورود گوگل به آن لینک شود؟", "يوجد حساب بهذا البريد وكلمة مرور. ربط دخول Google به؟", "An account with this Gmail already uses a password. Link Google sign-in to it?", "Аккаунт с этим Gmail уже использует пароль. Привязать вход через Google?", "该 Gmail 已有密码账户。是否绑定 Google 登录？" },
+        ["needSpace"] = new[] { "فایل مخفی برای این حامل خیلی بزرگ است.", "الملف المخفي كبير جدًا على هذا الحامل.", "The secret file is too big for this carrier.", "Скрываемый файл слишком велик для носителя.", "隐藏文件对于此载体来说太大了。" },
+        ["history"] = new[] { "تاریخچه عملیات", "سجل العمليات", "Operation history", "История операций", "操作历史" },
+        ["clearHistory"] = new[] { "پاک کردن تاریخچه", "مسح السجل", "Clear history", "Очистить историю", "清除历史" },
+        ["emptyHistory"] = new[] { "هنوز عملیاتی ثبت نشده است.", "لا توجد عمليات بعد.", "No operations yet.", "Операций пока нет.", "暂无操作记录。" },
+        ["autoLocked"] = new[] { "به‌علت عدم فعالیت قفل شد.", "تم القفل لعدم النشاط.", "Locked due to inactivity.", "Заблокировано из-за неактивности.", "因长时间无操作已锁定。" },
+        ["lockedOut"] = new[] { "تلاش ناموفق زیاد است؛ {0} ثانیه دیگر تلاش کنید.", "محاولات فاشلة كثيرة؛ حاول بعد {0} ثانية.", "Too many failed attempts; try again in {0} seconds.", "Слишком много попыток; повторите через {0} с.", "失败尝试过多，请 {0} 秒后再试。" },
+        ["updateTitle"] = new[] { "به‌روزرسانی جدید", "تحديث جديد", "Update available", "Доступно обновление", "有可用更新" },
+        ["updateMsg"] = new[] { "نسخه جدید منتشر شده است. صفحه دانلود باز شود؟", "تم إصدار نسخة جديدة. فتح صفحة التنزيل؟", "A new version is available. Open the download page?", "Доступна новая версия. Открыть страницу загрузки?", "有新版本可用，是否打开下载页面？" },
     };
 
     private string T(string key) =>
@@ -182,6 +198,56 @@ public partial class MainWindow : Window
         ApplyLang();
         SetPage(0);
         InitAuth();
+        try
+        {
+            _idleTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
+            _idleTimer.Tick += IdleTick;
+            _idleTimer.Start();
+            SystemEvents.SessionSwitch += OnSessionSwitch;
+        }
+        catch { }
+        CheckUpdates();
+    }
+
+    internal string Tr(string key) => T(key);
+
+    [DllImport("user32.dll")]
+    private static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct LASTINPUTINFO { public uint cbSize; public uint dwTime; }
+
+    private static TimeSpan IdleTime()
+    {
+        try
+        {
+            var i = new LASTINPUTINFO { cbSize = (uint)Marshal.SizeOf<LASTINPUTINFO>() };
+            if (!GetLastInputInfo(ref i)) return TimeSpan.Zero;
+            uint tick = (uint)Environment.TickCount;
+            return TimeSpan.FromMilliseconds(tick >= i.dwTime ? tick - i.dwTime : 0);
+        }
+        catch { return TimeSpan.Zero; }
+    }
+
+    private void IdleTick(object? sender, EventArgs e)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(_user) || _user == "__selftest") return;
+            if (IdleTime() >= TimeSpan.FromMinutes(5)) DoLogout("autoLocked");
+        }
+        catch { }
+    }
+
+    private void OnSessionSwitch(object sender, SessionSwitchEventArgs e)
+    {
+        try
+        {
+            if (e.Reason == SessionSwitchReason.SessionLock
+                && !string.IsNullOrEmpty(_user) && _user != "__selftest")
+                Dispatcher.Invoke(() => DoLogout("autoLocked"));
+        }
+        catch { }
     }
 
     // Effective Google credentials: silent config.json override wins (keeps existing
@@ -463,6 +529,7 @@ public partial class MainWindow : Window
             BtnBackupExport.Content = T("exportBackup");
             BtnRotateRecovery.Content = T("newCodeBtn");
             BtnLogout.Content = T("logout");
+            BtnHistory.Content = T("history");
             LblBackupHint.Text = T("backupHint");
         }
         catch { }
@@ -478,6 +545,7 @@ public partial class MainWindow : Window
         try
         {
             _user = username;
+            ClearAuthSecrets();
             var rec = AuthStore.Get(username);
             if (rec != null) { SetLang(rec.Lang); SetTheme(rec.Theme); }
             AuthCodeBox.Visibility = Visibility.Collapsed;
@@ -511,8 +579,29 @@ public partial class MainWindow : Window
             if (u.Length < 2 || p.Length == 0) { ShowAuthError("authFillAll"); return; }
             if (_authLoginMode)
             {
+                string lkey = u.ToLowerInvariant();
+                if (_loginFails.TryGetValue(lkey, out var st) && st.until > DateTime.Now)
+                {
+                    int secs = (int)Math.Ceiling((st.until - DateTime.Now).TotalSeconds);
+                    try
+                    {
+                        LblAuthErr.Text = T("lockedOut").Replace("{0}", secs.ToString());
+                        LblAuthErr.Visibility = Visibility.Visible;
+                    }
+                    catch { }
+                    return;
+                }
                 var rec = AuthStore.Verify(u, p);
-                if (rec == null) { ShowAuthError(AuthStore.Get(u) == null ? "userNotFound" : "wrongPass"); return; }
+                if (rec == null)
+                {
+                    _loginFails.TryGetValue(lkey, out var cur);
+                    cur.n++;
+                    if (cur.n >= 5) cur.until = DateTime.Now.AddSeconds(30 * (cur.n - 4));
+                    _loginFails[lkey] = cur;
+                    ShowAuthError(AuthStore.Get(u) == null ? "userNotFound" : "wrongPass");
+                    return;
+                }
+                _loginFails.Remove(lkey);
                 CompleteLogin(rec.Username);
             }
             else
@@ -524,6 +613,7 @@ public partial class MainWindow : Window
                 _user = u;
                 _pendingCode = code;
                 LblRecoveryCode.Text = code;
+                ClearAuthSecrets();
                 LblAuthErr.Visibility = Visibility.Collapsed;
                 AuthFormBox.Visibility = Visibility.Collapsed;
                 AuthRestoreBox.Visibility = Visibility.Collapsed;
@@ -659,6 +749,7 @@ public partial class MainWindow : Window
                 _user = mail;
                 _pendingCode = code;
                 LblRecoveryCode.Text = code;
+                ClearAuthSecrets();
                 AuthFormBox.Visibility = Visibility.Collapsed;
                 AuthRestoreBox.Visibility = Visibility.Collapsed;
                 AuthCodeBox.Visibility = Visibility.Visible;
@@ -751,7 +842,9 @@ public partial class MainWindow : Window
         catch { }
     }
 
-    private void BtnLogout_Click(object sender, RoutedEventArgs e)
+    private void BtnLogout_Click(object sender, RoutedEventArgs e) => DoLogout();
+
+    private void DoLogout(string? noticeKey = null)
     {
         try
         {
@@ -768,6 +861,19 @@ public partial class MainWindow : Window
             ContentGrid.IsEnabled = false;
             AuthOverlay.Visibility = Visibility.Visible;
             LblStatus.Text = T("ready");
+            if (noticeKey != null) ShowAuthError(noticeKey);
+        }
+        catch { }
+    }
+
+    private void AuthEnter_KeyDown(object sender, KeyEventArgs e)
+    {
+        try
+        {
+            if (e.Key != Key.Enter) return;
+            if (AuthRestoreBox.Visibility == Visibility.Visible)
+                BtnAuthRestore_Click(BtnAuthRestore, new RoutedEventArgs());
+            else BtnAuthGo_Click(BtnAuthGo, new RoutedEventArgs());
         }
         catch { }
     }
@@ -820,6 +926,44 @@ public partial class MainWindow : Window
         catch (AuthException ex)
         {
             MessageBox.Show(this, T(ex.Key), T("newCodeBtn"), MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        catch { }
+    }
+
+    private void BtnHistory_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(_user)) return;
+            new HistoryWindow(this, _user) { Owner = this }.ShowDialog();
+        }
+        catch { }
+    }
+
+    private async void CheckUpdates()
+    {
+        if (_updateChecked) return;
+        _updateChecked = true;
+        try
+        {
+            await Task.Delay(3000);
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+            http.DefaultRequestHeaders.UserAgent.ParseAdd("StegaSuite-Windows/" + AppVersion);
+            string json = await http.GetStringAsync(
+                "https://api.github.com/repos/Alvandcode/StegaSuite-Windows/releases/latest");
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            string tag = doc.RootElement.TryGetProperty("tag_name", out var tv)
+                ? tv.GetString() ?? "" : "";
+            string html = doc.RootElement.TryGetProperty("html_url", out var hv)
+                ? hv.GetString() ?? "" : "";
+            if (Version.TryParse(tag.TrimStart('v'), out var remote)
+                && Version.TryParse(AppVersion, out var local) && remote > local)
+            {
+                var ans = MessageBox.Show(this, $"StegaSuite {tag}\n\n" + T("updateMsg"),
+                    T("updateTitle"), MessageBoxButton.YesNo, MessageBoxImage.Question);
+                if (ans == MessageBoxResult.Yes && html.Length > 0)
+                    Process.Start(new ProcessStartInfo(html) { UseShellExecute = true });
+            }
         }
         catch { }
     }
@@ -903,8 +1047,31 @@ public partial class MainWindow : Window
         }
         catch { }
     }
-    private void FCarrierH_TextChanged(object sender, TextChangedEventArgs e) => UpdateCapacity(FCarrierH.Text, LblCapH);
+    private void FCarrierH_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        UpdateCapacity(FCarrierH.Text, LblCapH);
+        UpdateHideUsage();
+    }
     private void FCarrierE_TextChanged(object sender, TextChangedEventArgs e) => UpdateCapacity(FCarrierE.Text, LblCapE);
+    private void FPayload_TextChanged(object sender, TextChangedEventArgs e) => UpdateHideUsage();
+
+    /// <summary>Shows live payload-vs-capacity usage on the home page.</summary>
+    private void UpdateHideUsage()
+    {
+        try
+        {
+            string c = FCarrierH.Text.Trim(), p = FPayload.Text.Trim();
+            if (!File.Exists(c) || !File.Exists(p)) return;
+            byte[] carrier = File.ReadAllBytes(c);
+            long payloadLen = new FileInfo(p).Length;
+            var type = PngSteganography.DetectCarrierType(c, carrier);
+            long cap = PngSteganography.CapacityBytesForType(type, carrier);
+            if (cap <= 0) return;
+            long pct = (payloadLen + 512) * 100 / cap;
+            LblCapH.Text = $"{T("type")}: {type}  •  {T("capacity")}: ~{cap / 1024} KB  •  {pct}%";
+        }
+        catch { }
+    }
 
     // ── Operations ──
     private void PickFile(TextBox target)
@@ -998,20 +1165,39 @@ public partial class MainWindow : Window
             MessageBox.Show(this, T("needBoth"), Title, MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
-        SetBusy(true);
+        byte[] carrierBytes, payloadBytes;
         try
         {
+            carrierBytes = File.ReadAllBytes(carrierPath);
+            payloadBytes = File.ReadAllBytes(payloadPath);
+        }
+        catch (Exception ex)
+        {
+            LogMsg("error", ex.Message);
+            MessageBox.Show(this, T("error") + ex.Message, Title, MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+        var preType = PngSteganography.DetectCarrierType(carrierPath, carrierBytes);
+        if ((long)payloadBytes.Length + 512 > PngSteganography.CapacityBytesForType(preType, carrierBytes))
+        {
+            MessageBox.Show(this, T("needSpace"), Title, MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        SetBusy(true);
+        PbHide.Visibility = Visibility.Visible;
+        PbHide.Value = 0;
+        var hideProg = new Progress<double>(p =>
+        {
+            try { PbHide.Value = Math.Max(0, Math.Min(100, p * 100)); } catch { }
+        });
+        try
+        {
+            string payloadName = Path.GetFileName(payloadPath);
+            string? pw = string.IsNullOrEmpty(pass) ? null : pass;
             byte[] output = await Task.Run(() =>
-            {
-                byte[] carrier = File.ReadAllBytes(carrierPath);
-                byte[] payload = File.ReadAllBytes(payloadPath);
-                string payloadName = Path.GetFileName(payloadPath);
-                var type = PngSteganography.DetectCarrierType(carrierPath, carrier);
-                string? pw = string.IsNullOrEmpty(pass) ? null : pass;
-                if (type == CarrierType.PNG || type == CarrierType.BMP)
-                    return PngSteganography.HideImage(carrier, payload, payloadName, pw);
-                return PngSteganography.HideGeneric(carrier, payload, payloadName, pw, type);
-            });
+                preType == CarrierType.PNG || preType == CarrierType.BMP
+                    ? PngSteganography.HideImage(carrierBytes, payloadBytes, payloadName, pw, hideProg)
+                    : PngSteganography.HideGeneric(carrierBytes, payloadBytes, payloadName, pw, preType, hideProg));
 
             string suggested = ToStName(carrierPath);
             var dlg = new Microsoft.Win32.SaveFileDialog
@@ -1025,6 +1211,7 @@ public partial class MainWindow : Window
                 await File.WriteAllBytesAsync(dlg.FileName, output);
                 LogMsg("doneHide", dlg.FileName);
                 LblStatus.Text = T("doneHide") + Path.GetFileName(dlg.FileName);
+                HistoryStore.Add(_user, "home", payloadName + " → " + Path.GetFileName(dlg.FileName));
             }
         }
         catch (Exception ex)
@@ -1032,7 +1219,7 @@ public partial class MainWindow : Window
                 LogMsg("error", ex.Message);
             MessageBox.Show(this, T("error") + ex.Message, Title, MessageBoxButton.OK, MessageBoxImage.Error);
         }
-        finally { SetBusy(false); }
+        finally { PbHide.Visibility = Visibility.Collapsed; FPassH.Clear(); SetBusy(false); }
     }
 
     private async void BtnGoExtract_Click(object sender, RoutedEventArgs e)
@@ -1045,6 +1232,12 @@ public partial class MainWindow : Window
             return;
         }
         SetBusy(true);
+        PbExtract.Visibility = Visibility.Visible;
+        PbExtract.Value = 0;
+        var extProg = new Progress<double>(p =>
+        {
+            try { PbExtract.Value = Math.Max(0, Math.Min(100, p * 100)); } catch { }
+        });
         try
         {
             ExtractResult result = await Task.Run(() =>
@@ -1052,7 +1245,7 @@ public partial class MainWindow : Window
                 byte[] carrier = File.ReadAllBytes(carrierPath);
                 var type = PngSteganography.DetectCarrierType(carrierPath, carrier);
                 string? pw = string.IsNullOrEmpty(pass) ? null : pass;
-                return PngSteganography.ExtractFromBytes(carrier, pw, type);
+                return PngSteganography.ExtractFromBytes(carrier, pw, type, extProg);
             });
 
             string dir = Path.GetDirectoryName(carrierPath) ?? "";
@@ -1067,6 +1260,8 @@ public partial class MainWindow : Window
                 await File.WriteAllBytesAsync(dlg.FileName, result.Bytes);
                 LogMsg("doneExtract", dlg.FileName);
                 LblStatus.Text = T("doneExtract") + Path.GetFileName(dlg.FileName);
+                HistoryStore.Add(_user, "extract",
+                    result.FileName + " (" + Path.GetFileName(carrierPath) + ")");
             }
         }
         catch (Exception ex)
@@ -1074,6 +1269,6 @@ public partial class MainWindow : Window
                 LogMsg("error", ex.Message);
             MessageBox.Show(this, T("error") + ex.Message, Title, MessageBoxButton.OK, MessageBoxImage.Error);
         }
-        finally { SetBusy(false); }
+        finally { PbExtract.Visibility = Visibility.Collapsed; FPassE.Clear(); SetBusy(false); }
     }
 }

@@ -254,6 +254,33 @@ static class Tests
             return true;
         });
 
+        Check("stego progress reporting", () =>
+        {
+            // Direct recorder (not Progress<T>) so the test is deterministic
+            // regardless of SynchronizationContext delivery quirks.
+            var rec = new Rec();
+            var rec2 = new Rec();
+            byte[] carrier = MakePng(120, 120);
+            byte[] stego = PngSteganography.HideImage(carrier, new byte[1000], "f.bin", null, rec);
+            if (rec.Vals.Count == 0 || Math.Abs(rec.Vals[^1] - 1.0) > 1e-9) return false;
+            var r = PngSteganography.ExtractFromBytes(stego, null, CarrierType.PNG, rec2);
+            return r.Bytes.Length == 1000 && rec2.Vals.Count > 0 && Math.Abs(rec2.Vals[^1] - 1.0) < 1e-9;
+        });
+
+        Check("history add/load/clear per user", () =>
+        {
+            HistoryStore.BaseDir = Path.Combine(Path.GetTempPath(), "stega_hist_test");
+            HistoryStore.Clear("ali");
+            HistoryStore.Add("ali", "home", "a → b");
+            HistoryStore.Add("ali", "extract", "c");
+            HistoryStore.Add(null, "home", "ignored");
+            var list = HistoryStore.Load("ali");
+            if (list.Count != 2 || list[0].Kind != "home" || list[1].Detail != "c") return false;
+            if (HistoryStore.Load("sara").Count != 0) return false;
+            HistoryStore.Clear("ali");
+            return HistoryStore.Load("ali").Count == 0;
+        });
+
         Check("appconfig save/load roundtrip", () =>
         {
             AppConfig.ConfigPath = Path.Combine(Path.GetTempPath(), "stega_cfg_test.json");
@@ -282,4 +309,11 @@ static class Tests
         Console.WriteLine($"--- {pass} passed, {fail} failed ---");
         return fail == 0 ? 0 : 1;
     }
+}
+
+/// <summary>Synchronous IProgress recorder (no SynchronizationContext involved).</summary>
+sealed class Rec : IProgress<double>
+{
+    public readonly List<double> Vals = new();
+    public void Report(double v) { Vals.Add(v); }
 }
