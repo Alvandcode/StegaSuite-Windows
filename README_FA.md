@@ -1,5 +1,7 @@
 # StegaSuite — نسخه ویندوز (Windows Edition, v2 WPF)
 
+**زبان:** **فارسی** | [English](README.md)
+
 پورت کامل و سازگارِ اپ اندرویدی [StegaSuite](https://github.com/Alvandcode/StegaSuite) برای ویندوز ۱۰/۱۱.
 تکنولوژی: **C# + WPF + .NET 10** — تک‌فایل اجرایی، کاملاً آفلاین، ریسپانسیو و مستقل از DPI.
 
@@ -113,4 +115,15 @@ StegaSuite-Windows/
   Hide و Extract متقارن نیست و عملاً خراب است. نسخه ویندوز هر دو سمت را
   درست (۱ بیت در هر بایت) پیاده کرده، پس فایل‌های عمومیِ ویندوز بین خودشان
   سالم رفت‌وبرگشت می‌شوند ولی با اندرویدِ فعلی روی این دسته سازگار نیستند.
-  اگر در اندروید هم همین اصلاح اعمال شود، سازگاری کامل می‌شود.
+   اگر در اندروید هم همین اصلاح اعمال شود، سازگاری کامل می‌شود.
+
+## حمایت از پروژه
+
+اگر استگانوسویت به کارتان آمده:
+
+- ⭐ در گیت‌هاب ستاره بدهید:
+  [Alvandcode/StegaSuite-Windows](https://github.com/Alvandcode/StegaSuite-Windows)
+- 💬 کانال تلگرام: [t.me/a_c_official](https://t.me/a_c_official)
+- 🌐 وب‌سایت و آموزش: [alvandcode.github.io/StegaSuite](https://alvandcode.github.io/StegaSuite/)
+- 💎 کیف پول TON برای حمایت مالی:
+  `UQCB9rzvwmq0FJDaBkHVdBgbfZPb06FWdKco3woAHH6AXuUt`

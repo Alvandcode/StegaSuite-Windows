@@ -1,5 +1,7 @@
 # StegaSuite for Windows
 
+**Language:** [فارسی](README_FA.md) | **English**
+
 [![Release](https://img.shields.io/github/v/release/Alvandcode/StegaSuite-Windows)](https://github.com/Alvandcode/StegaSuite-Windows/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-blue)](https://github.com/Alvandcode/StegaSuite-Windows/releases)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -7,7 +9,6 @@
 Hide any file inside any file — secure steganography for Windows 10/11 (x64),
 with AES-256-GCM encryption. Windows port of
 [StegaSuite for Android](https://github.com/Alvandcode/StegaSuite).
-📖 Persian docs: [README_FA.md](README_FA.md)
 
 ## Download
 
@@ -74,6 +75,17 @@ Tests/                   engine round-trip tests
 Installer/               dependency-free setup (Install.bat/Install.ps1)
 Assets/                  app icon + artwork
 ```
+
+## Support the project
+
+If StegaSuite is useful to you:
+
+- ⭐ Star it on GitHub:
+  [Alvandcode/StegaSuite-Windows](https://github.com/Alvandcode/StegaSuite-Windows)
+- 💬 Telegram channel: [t.me/a_c_official](https://t.me/a_c_official)
+- 🌐 Website & tutorial: [alvandcode.github.io/StegaSuite](https://alvandcode.github.io/StegaSuite/)
+- 💎 TON wallet for donations:
+  `UQCB9rzvwmq0FJDaBkHVdBgbfZPb06FWdKco3woAHH6AXuUt`
 
 ## License
 
