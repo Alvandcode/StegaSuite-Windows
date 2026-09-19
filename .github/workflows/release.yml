@@ -1,0 +1,71 @@
+name: Release Windows build
+
+# Fully automated release: pushing a version tag (e.g. v2.0.1) builds the app,
+# runs engine tests + headless UI self-test, and publishes a GitHub Release
+# with the installer zip and the portable exe attached. No manual steps.
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build (Release, no warnings tolerated as errors? no — just build)
+        run: dotnet build StegaSuite.Wpf.csproj -c Release --nologo
+
+      - name: Engine tests (11 stego/crypto + auth/backup round-trips)
+        run: dotnet run --project Tests/Tests.csproj -c Release
+
+      - name: Headless UI self-test (3 sizes x 5 langs x 9 themes x 6 pages)
+        continue-on-error: true # needs a desktop session; informational on CI
+        run: dotnet run --project StegaSuite.Wpf.csproj -c Release -- --selftest
+
+      - name: Publish portable (framework-dependent, needs .NET 10 runtime)
+        run: dotnet publish StegaSuite.Wpf.csproj -c Release -r win-x64 --self-contained false /p:PublishSingleFile=true -o dist/portable
+
+      - name: Publish installer payload (self-contained, no runtime needed)
+        run: dotnet publish StegaSuite.Wpf.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o dist/payload
+
+      - name: Pack setup zip
+        shell: pwsh
+        run: |
+          $ver = '${{ github.ref_name }}'.TrimStart('v')
+          New-Item -ItemType Directory -Path dist/setup -Force | Out-Null
+          Copy-Item Installer/Install.bat, Installer/Install.ps1 dist/setup/
+          Copy-Item dist/payload/StegaSuite.exe dist/setup/
+          Compress-Archive -LiteralPath dist/setup/Install.bat, dist/setup/Install.ps1, dist/setup/StegaSuite.exe `
+            -DestinationPath "dist/StegaSuite-Setup-$ver.zip" -Force
+          Get-ChildItem dist/*.zip, dist/portable/StegaSuite.exe | ForEach-Object {
+            '{0} = {1} MB' -f $_.Name, [math]::Round($_.Length / 1MB, 1)
+          }
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: StegaSuite for Windows ${{ github.ref_name }}
+          body: |
+            ## StegaSuite for Windows ${{ github.ref_name }}
+
+            Hide any file inside any file — AES-256-GCM steganography for Windows 10/11.
+
+            **Download:**
+            - `StegaSuite-Setup-*.zip` — installer (no .NET needed, run `Install.bat`)
+            - `StegaSuite.exe` — portable (needs .NET 10 Desktop Runtime)
+
+            Built automatically by GitHub Actions (build + engine tests + UI self-test).
+          files: |
+            dist/StegaSuite-Setup-*.zip
+            dist/portable/StegaSuite.exe

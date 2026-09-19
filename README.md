@@ -5,6 +5,7 @@
 [![Release](https://img.shields.io/github/v/release/Alvandcode/StegaSuite-Windows)](https://github.com/Alvandcode/StegaSuite-Windows/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-blue)](https://github.com/Alvandcode/StegaSuite-Windows/releases)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Release build](https://github.com/Alvandcode/StegaSuite-Windows/actions/workflows/release.yml/badge.svg)](https://github.com/Alvandcode/StegaSuite-Windows/actions)
 
 Hide any file inside any file — secure steganography for Windows 10/11 (x64),
 with AES-256-GCM encryption. Windows port of
@@ -19,6 +20,9 @@ Get the latest build from
   Unzip and run `Install.bat`.
 - **StegaSuite.exe** — portable (needs
   [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download)).
+
+> Releases are built automatically by GitHub Actions on every version tag
+> (`git tag vX.Y.Z && git push origin vX.Y.Z`).
 
 ## Features
 

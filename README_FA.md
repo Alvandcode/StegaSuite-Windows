@@ -21,6 +21,9 @@ StegaSuite-Windows\publish\StegaSuite.exe
 میانبر استارت‌منو/دسکتاپ می‌سازد و در Add/Remove Programs ثبت می‌کند.
 حذف از همان‌جاست. دیتای کاربر (`%AppData%\StegaSuite`) با حذف برنامه پاک نمی‌شود.
 
+> ریلیزها با GitHub Actions روی هر تگ نسخه خودکار ساخته می‌شوند
+> (`git tag vX.Y.Z && git push origin vX.Y.Z`).
+
 ## سیستم‌عامل‌های پشتیبانی‌شده
 
 ویندوز ۱۰ (نسخه 1809 به بعد) و ویندوز ۱۱ — نسخه ۶۴بیتی.
