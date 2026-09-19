@@ -16,9 +16,9 @@ with AES-256-GCM encryption. Windows port of
 Get the latest build from
 [Releases](https://github.com/Alvandcode/StegaSuite-Windows/releases):
 
-- **StegaSuite-Setup-2.0.0.zip** — installer (self-contained, no .NET needed).
+- **StegaSuite-Install-2.0.0.zip** — installer (self-contained, no .NET needed).
   Unzip and run `Install.bat`.
-- **StegaSuite.exe** — portable (needs
+- **StegaSuite-Portable-2.0.0.exe** — portable (needs
   [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download)).
 
 > Releases are built automatically by GitHub Actions on every version tag

@@ -15,7 +15,7 @@ StegaSuite-Windows\publish\StegaSuite.exe
 
 ## نصب (نسخه نصبی)
 
-فایل `Installer\StegaSuite-Setup-2.0.0.zip` را باز کنید و روی `Install.bat` دابل‌کلیک
+فایل `Installer\StegaSuite-Install-2.0.0.zip` را باز کنید و روی `Install.bat` دابل‌کلیک
 کنید (دسترسی ادمین می‌خواهد؛ بدون ادمین، نصب کاربر-محور انجام می‌شود).
 نصب‌کننده نسخه خودکفا (بدون نیاز به دانلود .NET) را در Program Files می‌گذارد،
 میانبر استارت‌منو/دسکتاپ می‌سازد و در Add/Remove Programs ثبت می‌کند.

@@ -35,6 +35,12 @@ jobs:
       - name: Publish portable (framework-dependent, needs .NET 10 runtime)
         run: dotnet publish StegaSuite.Wpf.csproj -c Release -r win-x64 --self-contained false /p:PublishSingleFile=true -o dist/portable
 
+      - name: Name portable exe with version
+        shell: pwsh
+        run: |
+          $ver = '${{ github.ref_name }}'.TrimStart('v')
+          Copy-Item dist/portable/StegaSuite.exe "dist/StegaSuite-Portable-$ver.exe"
+
       - name: Publish installer payload (self-contained, no runtime needed)
         run: dotnet publish StegaSuite.Wpf.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true -o dist/payload
 
@@ -46,7 +52,7 @@ jobs:
           Copy-Item Installer/Install.bat, Installer/Install.ps1 dist/setup/
           Copy-Item dist/payload/StegaSuite.exe dist/setup/
           Compress-Archive -LiteralPath dist/setup/Install.bat, dist/setup/Install.ps1, dist/setup/StegaSuite.exe `
-            -DestinationPath "dist/StegaSuite-Setup-$ver.zip" -Force
+            -DestinationPath "dist/StegaSuite-Install-$ver.zip" -Force
           Get-ChildItem dist/*.zip, dist/portable/StegaSuite.exe | ForEach-Object {
             '{0} = {1} MB' -f $_.Name, [math]::Round($_.Length / 1MB, 1)
           }
@@ -62,10 +68,10 @@ jobs:
             Hide any file inside any file — AES-256-GCM steganography for Windows 10/11.
 
             **Download:**
-            - `StegaSuite-Setup-*.zip` — installer (no .NET needed, run `Install.bat`)
-            - `StegaSuite.exe` — portable (needs .NET 10 Desktop Runtime)
+            - `StegaSuite-Install-*.zip` — installer (no .NET needed, run `Install.bat`)
+            - `StegaSuite-Portable-*.exe` — portable (needs .NET 10 Desktop Runtime)
 
             Built automatically by GitHub Actions (build + engine tests + UI self-test).
           files: |
-            dist/StegaSuite-Setup-*.zip
-            dist/portable/StegaSuite.exe
+            dist/StegaSuite-Install-*.zip
+            dist/StegaSuite-Portable-*.exe
